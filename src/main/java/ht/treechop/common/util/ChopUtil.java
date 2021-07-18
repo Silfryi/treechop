@@ -16,8 +16,7 @@ import net.minecraft.block.BlockLeaves;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Blocks;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
+import net.minecraft.item.*;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
@@ -289,9 +288,11 @@ public class ChopUtil {
                         Collections.shuffle(candidates);
 
                         for (BlockPos nextTarget : candidates) {
-                            numChopsLeft = gatherChopAndGetNumChopsRemaining(world, nextTarget, numChopsLeft, choppedBlocks);
-                            if (numChopsLeft <= 0) {
-                                break;
+                            if (nextTarget.getY() == target.getY()) {
+                                numChopsLeft = gatherChopAndGetNumChopsRemaining(world, nextTarget, numChopsLeft, choppedBlocks);
+                                if (numChopsLeft <= 0) {
+                                    break;
+                                }
                             }
                         }
 
@@ -413,8 +414,7 @@ public class ChopUtil {
                         true
                 )),
                 false
-        )
-                : ChopResult.IGNORED;
+        ) : ChopResult.IGNORED;
     }
 
     // Copied from 1.16.4 Vector3i::manhattanDistance
@@ -430,7 +430,15 @@ public class ChopUtil {
     }
 
     public static boolean canChopWithTool(ItemStack tool) {
-        return ConfigHandler.canChopWithItem(tool.getItem());
+        return ConfigHandler.canChopWithItem(tool.getItem()) || toolChopsWell(tool) || toolChopsBadly(tool);
+    }
+
+    public static boolean toolChopsWell(ItemStack tool) {
+        return ConfigHandler.COMMON.canAnyAxeBeUsed.get() && (tool.getItem() instanceof ItemAxe || tool.getItem().getHarvestLevel(tool, "axe", null, null) >= 0);
+    }
+
+    public static boolean toolChopsBadly(ItemStack tool) {
+        return !toolChopsWell(tool) && ConfigHandler.COMMON.canAnyAxeBeUsed.get() && (tool.getItem() instanceof ItemSpade || tool.getItem().getHarvestLevel(tool, "shovel", null, null) >= 0 || tool.getItem() instanceof ItemHoe || tool.getItem().getHarvestLevel(tool, "hoe", null, null) >= 0 || tool.getItem() instanceof ItemPickaxe || tool.getItem().getHarvestLevel(tool, "pickaxe", null, null) >= 0);
     }
 
     public static int getNumChopsByTool(ItemStack tool, IBlockState blockState) {
@@ -438,6 +446,8 @@ public class ChopUtil {
 
         if (toolItem instanceof IChoppingItem) {
             return ((IChoppingItem) toolItem).getNumChops(tool, blockState);
+        } else if (ConfigHandler.getInstantChopItems().contains(toolItem)) {
+            return ConfigHandler.COMMON.maxNumTreeBlocks;
         } else {
             return 1;
         }

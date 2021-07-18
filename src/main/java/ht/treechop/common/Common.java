@@ -20,8 +20,10 @@ import net.minecraft.world.WorldServer;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.AttachCapabilitiesEvent;
 import net.minecraftforge.event.world.BlockEvent;
+import net.minecraftforge.fml.common.eventhandler.Event;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
+import static ht.treechop.common.util.ChopUtil.canChopWithTool;
 import static ht.treechop.common.util.ChopUtil.isBlockALog;
 
 public class Common {
@@ -41,11 +43,15 @@ public class Common {
         // Reuse some permission logic from PlayerInteractionManager.tryHarvestBlock
         if (!isBlockALog(blockState)
                 || !ConfigHandler.COMMON.enabled.get()
-                || !ChopUtil.canChopWithTool(tool)
                 || !ChopUtil.playerWantsToChop(agent)
                 || event.isCanceled()
                 || !(event.getWorld() instanceof WorldServer)
         ) {
+            return;
+        }
+        if (!canChopWithTool(tool)) {
+            event.setResult(Event.Result.DENY);
+            event.setCanceled(true);
             return;
         }
 

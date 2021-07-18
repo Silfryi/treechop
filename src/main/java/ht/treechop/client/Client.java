@@ -76,10 +76,12 @@ public class Client extends Common {
 
     public static void toggleSettingsOverlay() {
         Minecraft minecraft = Minecraft.getMinecraft();
-        if (minecraft.currentScreen instanceof ClientSettingsScreen) {
-            ClientSettingsScreen.closeScreen();
-        } else {
-            minecraft.displayGuiScreen(new ClientSettingsScreen());
+        if (ConfigHandler.COMMON.clientGUIEnabled.get()) {
+            if (minecraft.currentScreen instanceof ClientSettingsScreen) {
+                ClientSettingsScreen.closeScreen();
+            } else {
+                minecraft.displayGuiScreen(new ClientSettingsScreen());
+            }
         }
     }
 

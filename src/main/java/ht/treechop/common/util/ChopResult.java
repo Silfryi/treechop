@@ -155,12 +155,16 @@ public class ChopResult {
         World world = treeBlock.getWorld();
         BlockPos pos = treeBlock.getPos();
         IBlockState blockState = world.getBlockState(pos);
-        blockState.getBlock().harvestBlock(
-                world, agent, pos, blockState, world.getTileEntity(pos), tool
-        );
-        totalXp.getAndAdd(
-                blockState.getBlock().getExpDrop(blockState, world, pos, fortune)
-        );
+        if (!ChopUtil.toolChopsBadly(tool)) {
+            blockState.getBlock().harvestBlock(
+                    world, agent, pos, blockState, world.getTileEntity(pos), tool
+            );
+            totalXp.getAndAdd(
+                    blockState.getBlock().getExpDrop(blockState, world, pos, fortune)
+            );
+        } else {
+            world.setBlockToAir(pos);
+        }
     }
 
 }

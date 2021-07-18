@@ -13,6 +13,7 @@ import net.minecraft.block.Block;
 import net.minecraft.client.Minecraft;
 import net.minecraft.init.Blocks;
 import net.minecraft.item.Item;
+import net.minecraft.item.ItemAxe;
 import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
@@ -38,11 +39,13 @@ public class ConfigHandler {
 
     private static final String LIST_SEPARATOR = ",";
     private static List<String> choppingToolBlacklistNames;
+    private static List<String> instantChoppingListNames;
     // TODO: item overrides list
 
     private static Set<Block> logBlocks = null;
     private static Set<Block> leavesBlocks = null;
     private static Set<Item> choppingToolBlacklistItems = null;
+    private static Set<Item> instantChoppingListItems = null;
 
     private static Configuration config;
     private static Stack<String> categoryStack = new Stack<>();
@@ -217,6 +220,19 @@ public class ConfigHandler {
         }
         return choppingToolBlacklistItems;
     }
+    public static Set<Item> getInstantChopItems() {
+        if (instantChoppingListItems == null) {
+            instantChoppingListItems = instantChoppingListNames.stream()
+                    .flatMap(str -> OreDictionary.getOres(str).stream())
+                    .map(ItemStack::getItem)
+                    .collect(Collectors.toSet());
+            instantChoppingListNames.stream()
+                    .map(a -> ForgeRegistries.ITEMS.getValue(new ResourceLocation(a)))
+                    .filter(Objects::nonNull)
+                    .forEach(instantChoppingListItems::add);
+        }
+        return instantChoppingListItems;
+    }
 
     public static boolean canChopWithItem(Item item) {
         boolean isListed = ConfigHandler.getChoppingToolBlacklistItems().contains(item);
@@ -233,6 +249,7 @@ public class ConfigHandler {
 
     public static class CommonConfig {
         public BooleanHandle enabled;
+        public BooleanHandle clientGUIEnabled;
 
         public int maxNumTreeBlocks;
         public int maxNumLeavesBlocks;
@@ -250,6 +267,9 @@ public class ConfigHandler {
         public float linearB;
 
         public static EnumHandle<ListType> blacklistOrWhitelist;
+        public BooleanHandle canAnyAxeBeUsed;
+        public BooleanHandle canOnlySpecifiedBeUsed;
+        public BooleanHandle doOtherToolsDestroyWood;
         public BooleanHandle preventChopRecursion;
         public BooleanHandle preventChoppingOnRightClick;
 
@@ -257,6 +277,9 @@ public class ConfigHandler {
             pushCategory("permissions");
             enabled = getBoolean(
                     "Whether this mod is enabled or not", "enabled",
+                    true);
+            clientGUIEnabled = getBoolean(
+                    "Whether the client GUI is able to be accessed at all", "clientGUIEnabled",
                     true);
 
             rawPermissions.clear();
@@ -340,7 +363,20 @@ public class ConfigHandler {
             choppingToolBlacklistNames = getStringList(
                     "Comma-separated list of items that should not chop when used to break a log\nOre dictionary names are also acceptable",
                     "choppingToolsBlacklist",
-                    Lists.newArrayList("mekanism:atomic_disassembler"));
+                    Lists.newArrayList("mekanism:atomicdisassembler"));
+            instantChoppingListNames = getStringList(
+                    "Comma-separated list of items that chop instantly\nOre dictionary names are also acceptable",
+                    "instantChopList",
+                    Lists.newArrayList("mekanism:atomicdisassembler"));
+            canAnyAxeBeUsed = getBoolean(
+                    "Whether any axe can be used to chop down trees", "canAnyAxeBeUsed",
+                    true);
+            canOnlySpecifiedBeUsed = getBoolean(
+                    "Whether any breaking of wood blocks, chopping or otherwise, can be done only with a specified tool", "canOnlySpecifiedBeUsed",
+                    false);
+            doOtherToolsDestroyWood = getBoolean(
+                    "Whether other tools (shovel, pickaxe, hoe) can be used to destroy log blocks to fell a tree, for slightly less wood per tree. REQUIRES \"canOnlySpecifiedBeUsed\"", "doOtherToolsDestroyWood",
+                    false);
             popCategory();
             popCategory();
 

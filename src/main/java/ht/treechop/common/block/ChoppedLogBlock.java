@@ -150,6 +150,7 @@ public class ChoppedLogBlock extends Block implements IChoppableBlock {
         setDefaultState(getBlockState().getBaseState()
                 .withProperty(CHOPS, 1)
         );
+        setUnlocalizedName(TreeChopMod.MOD_ID + ".chopped_log");
 
         this.shape = shape;
     }
